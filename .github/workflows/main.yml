@@ -33,7 +33,6 @@ jobs:
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout -b google-bbr google-bbr/v3
-          git checkout linux-6.5.y
           git merge google-bbr --allow-unrelated-histories
 
       - name: Get .config
