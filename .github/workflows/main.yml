@@ -34,17 +34,18 @@ jobs:
         run: |
           git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           
+      - name: Change to linux Directory
+        run: cd linux
+
       - name: Clone and configure bbr
         run: |
-          cd linux
           ls
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout google-bbr/v3
-          
+
       - name: Merge bbr to linux
         run: |
-          cd linux    
           git checkout linux-6.5.y
           git merge google-bbr --allow-unrelated-histories -X theirs
 
@@ -65,7 +66,6 @@ jobs:
           
       - name: Compile AMD Kernel
         run: |
-          cd linux
           scripts/config --disable SECURITY_LOCKDOWN_LSM
           scripts/config --disable DEBUG_INFO
           scripts/config --disable MODULE_SIG
@@ -73,9 +73,7 @@ jobs:
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
           
       - name: Clean up after Build
-        run: |
-          cd linux
-          make distclean
+        run: make distclean
           
       - name: Get2 .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
@@ -94,7 +92,6 @@ jobs:
                             
       - name: Compile ARM Kernel
         run: |
-          cd linux
           scripts/config --disable SECURITY_LOCKDOWN_LSM
           scripts/config --disable DEBUG_INFO
           scripts/config --disable MODULE_SIG
@@ -105,22 +102,22 @@ jobs:
         uses: actions/upload-artifact@v3.1.3
         with:
           name: deb
-          path: linux-*.deb
-          
+          path: linux-*/*.deb
+                    
       - name: Read version from Makefile
         id: version
         run: |
           export VERSION=$(grep '^VERSION =' linux/Makefile | awk -F '= ' '{print $$2}')
           export PATCHLEVEL=$(grep '^PATCHLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
           export SUBLEVEL=$(grep '^SUBLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
-          echo "::set-env name=KERNEL_VERSION::${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"    
+          echo "::set-output name=KERNEL_VERSION::${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
+    
           
       - name: Release
-        if: ${{ github.event.inputs.release != 'none' }}
+        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
         uses: ncipollo/release-action@v1.13.0
-
         with:
-          artifacts: "linux-*.deb"
+          artifacts: "linux-*/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-${{ env.KERNEL_VERSION }}-BBRv3
+          tag: Debian-Ubuntu-${{ steps.version.outputs.KERNEL_VERSION }}-BBRv3
