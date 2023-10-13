@@ -38,13 +38,13 @@ jobs:
 
       - name: Clone and configure kernel
         run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          git clone https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git --branch linux-6.5.y
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout linux-6.5.y
-          git merge google-bbr/v3
-          git commit -m "Merge google-bbr/v3 into linux-6.5.y"
+          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
+          git merge
 
       - name: Get AMD config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
