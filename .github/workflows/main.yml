@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-      
-env:
-  SCCACHE_CACHE_SIZE: 5G
-  SCCACHE_DIR: /home/runner/.cache/sccache
   
 jobs:
   Kernel-build:
@@ -52,18 +48,6 @@ jobs:
       - name: Get .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
 
-      - name: Setup cache for sccache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm
-
-      - name: Setup cache for LLVM
-        uses: actions/cache@v3
-        with:
-          path: /path/to/llvm/cache
-          key: llvm-${{ hashFiles('linux/.config') }}
-          
       - name: Compile AMD Kernel
         run: |
           scripts/config --disable SECURITY_LOCKDOWN_LSM
@@ -77,18 +61,6 @@ jobs:
           
       - name: Get2 .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
-        
-      - name: Setup cache for sccache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm  
-          
-      - name: Setup cache for LLVM
-        uses: actions/cache@v3
-        with:
-          path: /path/to/llvm/cache
-          key: llvm-${{ hashFiles('linux/.config') }}
                             
       - name: Compile ARM Kernel
         run: |
@@ -111,8 +83,7 @@ jobs:
           export PATCHLEVEL=$(grep '^PATCHLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
           export SUBLEVEL=$(grep '^SUBLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
           echo "::set-output name=KERNEL_VERSION::${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
-    
-          
+              
       - name: Release
         if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
         uses: ncipollo/release-action@v1.13.0
