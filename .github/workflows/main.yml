@@ -42,9 +42,9 @@ jobs:
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
-          git checkout google-bbr/v3
           git checkout linux-6.5.y
-          git merge google-bbr --allow-unrelated-histories -X theirs
+          git merge google-bbr/v3
+          git commit -m "Merge google-bbr/v3 into linux-6.5.y"
 
       - name: Get AMD config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
