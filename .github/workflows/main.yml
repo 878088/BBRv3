@@ -32,15 +32,16 @@ jobs:
 
       - name: Clone and configure kernel
         run: |
-          git clone --branch linux-6.5.y https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
-          git checkout -b google-bbr google-bbr/v3
+          git checkout google-bbr/v3
       - name: Merge bbr to linux
-        run: |    
+        run: |
+          cd linux    
           git checkout linux-6.5.y
-          git merge --allow-unrelated-histories -X theirs google-bbr/v3
+          git merge google-bbr --allow-unrelated-histories -X theirs
 
       - name: Get .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
