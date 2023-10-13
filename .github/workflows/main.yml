@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
-
+      
+env:
+  SCCACHE_CACHE_SIZE: 5G
+  SCCACHE_DIR: /home/runner/.cache/sccache
+  
 jobs:
-  build:
+  Kernel-build:
     runs-on: ubuntu-latest
   
     steps:
@@ -33,24 +37,36 @@ jobs:
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout -b google-bbr google-bbr/v3
-          git merge google-bbr --allow-unrelated-histories
+      - name: Merge bbr to linux
+        run: |    
+          git checkout linux-6.5.y
+          git merge --allow-unrelated-histories -X theirs google-bbr/v3
 
       - name: Get .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
 
-      - name: Setup cache
+      - name: Setup cache for sccache
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/sccache
           key: sccache-${{ hashFiles('linux/.config') }}-llvm
+
+      - name: Setup cache for LLVM
+        uses: actions/cache@v3
+        with:
+          path: /path/to/llvm/cache
+          key: llvm-${{ hashFiles('linux/.config') }}
           
       - name: Compile AMD Kernel
         run: |
           cd linux
+          scripts/config --disable SECURITY_LOCKDOWN_LSM
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable MODULE_SIG
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
           
-      - name: Clean up after Build 1
+      - name: Clean up after Build
         run: |
           cd linux
           make distclean
@@ -58,15 +74,24 @@ jobs:
       - name: Get2 .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
         
-      - name: Setup cache
+      - name: Setup cache for sccache
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/sccache
           key: sccache-${{ hashFiles('linux/.config') }}-llvm  
-                  
+          
+      - name: Setup cache for LLVM
+        uses: actions/cache@v3
+        with:
+          path: /path/to/llvm/cache
+          key: llvm-${{ hashFiles('linux/.config') }}
+                            
       - name: Compile ARM Kernel
         run: |
           cd linux
+          scripts/config --disable SECURITY_LOCKDOWN_LSM
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable MODULE_SIG
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
                                    
