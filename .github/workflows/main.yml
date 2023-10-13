@@ -33,10 +33,15 @@ jobs:
       - name: Clone and configure kernel
         run: |
           git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          
+      - name: Clone and configure bbr
+        run: |
           cd linux
+          ls
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout google-bbr/v3
+          
       - name: Merge bbr to linux
         run: |
           cd linux    
