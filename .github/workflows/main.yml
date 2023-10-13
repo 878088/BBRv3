@@ -1,94 +1,13 @@
-name: Build Linux Kernel
+name: Check Disk Space
 
 on:
-  push:
-    branches:
-      - main
-  
+  workflow_dispatch:
+
 jobs:
-  Kernel-build:
+  check-disk-space:
     runs-on: ubuntu-latest
   
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.0
-      
-      - name: Set up environment
+      - name: Check Disk Space
         run: |
-          sudo apt-get update
-          sudo apt-fast install -y build-essential bc kmod cpio flex libncurses5-dev libelf-dev libssl-dev dwarves bison gawk openssl libssl-dev dkms libudev-dev libpci-dev libiberty-dev autoconf debhelper
-
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1.8.3
-        with:
-          version: "16"
-
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      - name: Clone and configure kernel
-        run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
-          
-      - name: Change to linux Directory
-        run: cd linux
-
-      - name: Clone and configure bbr
-        run: |
-          ls
-          git remote add google-bbr https://github.com/google/bbr.git
-          git fetch google-bbr
-          git checkout google-bbr/v3
-
-      - name: Merge bbr to linux
-        run: |
-          git checkout linux-6.5.y
-          git merge google-bbr --allow-unrelated-histories -X theirs
-
-      - name: Get .config
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
-
-      - name: Compile AMD Kernel
-        run: |
-          scripts/config --disable SECURITY_LOCKDOWN_LSM
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable MODULE_SIG
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
-          
-      - name: Clean up after Build
-        run: make distclean
-          
-      - name: Get2 .config
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
-                            
-      - name: Compile ARM Kernel
-        run: |
-          scripts/config --disable SECURITY_LOCKDOWN_LSM
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable MODULE_SIG
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
-                                   
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: deb
-          path: linux-*/*.deb
-                    
-      - name: Read version from Makefile
-        id: version
-        run: |
-          export VERSION=$(grep '^VERSION =' linux/Makefile | awk -F '= ' '{print $$2}')
-          export PATCHLEVEL=$(grep '^PATCHLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
-          export SUBLEVEL=$(grep '^SUBLEVEL =' linux/Makefile | awk -F '= ' '{print $$2}')
-          echo "::set-output name=KERNEL_VERSION::${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
-              
-      - name: Release
-        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
-        uses: ncipollo/release-action@v1.13.0
-        with:
-          artifacts: "linux-*/*.deb"
-          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
-          makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-${{ steps.version.outputs.KERNEL_VERSION }}-BBRv3
+          df -h
