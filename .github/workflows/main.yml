@@ -131,9 +131,6 @@ jobs:
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
 
-      - name: Get .config
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
-
       - name: Setup cache
         uses: actions/cache@v3
         with:
