@@ -1,41 +1,61 @@
 #!/bin/bash
 
-echo "正在克隆 linux-6.5.y 分支..."
+echo "克隆Kernel"
 if ! git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git; then
-    echo "克隆 linux-6.5.y 分支失败"
+    echo "克隆Kernel失败"
     exit 1
 fi
 
 cd linux || exit 1
 
-echo "正在添加 google-bbr 远程仓库..."
+echo "添加BBR远程仓库"
 if ! git remote add google-bbr https://github.com/google/bbr.git; then
-    echo "添加 google-bbr 远程仓库失败"
+    echo "添加BBR远程仓库失败"
     exit 1
 fi
 
-echo "正在获取最新的 google-bbr 仓库变更..."
+echo "更新BBR仓库"
 if ! git fetch google-bbr; then
-    echo "获取最新的 google-bbr 仓库变更失败"
+    echo "更新BBR仓库失败"
     exit 1
 fi
 
-echo "正在切换到 google-bbr/v3 分支..."
+echo "切换BBRv3"
 if ! git checkout google-bbr/v3; then
-    echo "切换到 google-bbr/v3 分支失败"
+    echo "切换BBRv3失败"
     exit 1
 fi
 
-echo "正在切换回 linux-6.5.y 分支..."
+echo "切换Kernel"
 if ! git checkout linux-6.5.y; then
-    echo "切换回 linux-6.5.y 分支失败"
+    echo "切换Kernel失败"
     exit 1
 fi
 
-echo "正在将 google-bbr/v3 分支合并到 linux-6.5.y 分支（无需手动编辑）..."
+echo "BBRv3合并到Kernel"
 if ! git merge --no-edit google-bbr/v3; then
-    echo "将 google-bbr/v3 分支合并到 linux-6.5.y 分支失败"
+    echo "BBRv3合并到Kernel失败"
     exit 1
 fi
 
-echo "合并成功完成！"
+cd .. || exit 1
+
+echo "复制Kernel"
+if ! cp -r linux linux-arm; then
+    echo "复制Kernel失败"
+    exit 1
+fi
+
+echo "AMD配置"
+if ! curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config; then
+    echo "AMD配置失败"
+    exit 1
+fi
+
+echo "ARM配置"
+if ! curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux-arm/.config; then
+    echo "ARM配置失败"
+    exit 1
+fi
+
+
