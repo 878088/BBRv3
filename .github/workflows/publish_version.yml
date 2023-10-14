@@ -1,0 +1,20 @@
+name: Publish Version
+
+on:
+  workflow_run:
+    workflows: ["Build x86_64 Kernel-bbrv3", "Build ARM64 Kernel-bbrv3"]
+    types:
+      - completed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release
+        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          artifacts: "linux-*/*.deb"
+          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
+          makeLatest: ${{ github.event.inputs.release == 'release' }}
+          tag: Debian-Ubuntu-6.5.y-BBRv3

@@ -1,0 +1,66 @@
+name: Build x86_64 Kernel-bbrv3
+
+on:
+  workflow_run:
+    workflows: ["Build ARM64 Kernel-bbrv3"]
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:   
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 4096
+          swap-size-mb: 512
+          remove-dotnet: 'true'
+          remove-android: 'true'  
+          
+      - name: Checkout
+        uses: actions/checkout@main
+      - uses: actions/setup-node@v3.8.1
+        with:
+          node-version: '18'
+      
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper -y
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1.8.3
+        with:
+          version: "16"
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
+        
+      - name: Clone and configure kernel
+        run: |
+          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          cd linux
+          git remote add google-bbr https://github.com/google/bbr.git
+          git fetch google-bbr
+          git checkout linux-6.5.y
+          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
+          git merge
+      - name: Get AMD config
+        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
+
+      - name: Compile AMD Kernel
+        run: |
+          cd linux
+          scripts/config --disable SECURITY_LOCKDOWN_LSM
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable MODULE_SIG
+          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
+          
+      - name: Trigger Publish Version Workflow
+  if: ${{ success() }}
+  uses: peter-evans/workflow-dispatch@v1
+  with:
+    workflow: publish_version.yml
+    token: ${{ secrets.GITHUB_TOKEN }}    
