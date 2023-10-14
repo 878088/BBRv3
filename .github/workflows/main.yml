@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,23 +70,25 @@ jobs:
         uses: actions/github-script@v5
         with:
           script: |
-          const token = process.env.GITHUB_TOKEN;
-          const owner = process.env.GITHUB_REPOSITORY.split("/")[0];
-          const repo = process.env.GITHUB_REPOSITORY.split("/")[1];
-          const ref = process.env.GITHUB_REF;
-          const sha = process.env.GITHUB_SHA;
-          const workflow_file = 'aarch64-build.yml';
-          const octokit = require('@octokit/rest')();
-          octokit.authenticate({ type: 'token', token: token });
-          octokit.actions.createWorkflowDispatch({
-          owner: owner,
-          repo: repo,
-          ref: ref,
-          workflow_id: workflow_file,
-          inputs: {
-            trigger_sha: sha
-          }
-        });
+            const token = process.env.GITHUB_TOKEN;
+            const owner = process.env.GITHUB_REPOSITORY.split("/")[0];
+            const repo = process.env.GITHUB_REPOSITORY.split("/")[1];
+            const ref = process.env.GITHUB_REF;
+            const sha = process.env.GITHUB_SHA;
+            const workflow_file = 'aarch64-build.yml';
+            
+            const octokit = require('@octokit/rest')();            
+            octokit.authenticate({ type: 'token', token: token });
+            
+            octokit.actions.createWorkflowDispatch({
+              owner: owner,
+              repo: repo,
+              ref: ref,
+              workflow_id: workflow_file,
+              inputs: {
+                trigger_sha: sha
+              }
+             });
           
 aarch64-build:
     runs-on: ubuntu-latest
@@ -161,20 +163,22 @@ aarch64-build:
         uses: actions/github-script@v5
         with:
           script: |
-          const token = process.env.GITHUB_TOKEN;
-          const owner = process.env.GITHUB_REPOSITORY.split("/")[0];
-          const repo = process.env.GITHUB_REPOSITORY.split("/")[1];
-          const ref = process.env.GITHUB_REF;
-          const sha = process.env.GITHUB_SHA;
-          const workflow_file = 'release.yml';
-          const octokit = require('@octokit/rest')();
-          octokit.authenticate({ type: 'token', token: token });
-          octokit.actions.createWorkflowDispatch({
-          owner: owner,
-          repo: repo,
-          ref: ref,
-          workflow_id: workflow_file,
-          inputs: {
-            trigger_sha: sha
-          }
-        });
+            const token = process.env.GITHUB_TOKEN;
+            const owner = process.env.GITHUB_REPOSITORY.split("/")[0];
+            const repo = process.env.GITHUB_REPOSITORY.split("/")[1];
+            const ref = process.env.GITHUB_REF;
+            const sha = process.env.GITHUB_SHA;
+            const workflow_file = 'release.yml';
+
+            const octokit = require('@octokit/rest')();
+            octokit.authenticate({ type: 'token', token: token });
+
+            octokit.actions.createWorkflowDispatch({
+              owner: owner,
+              repo: repo,
+              ref: ref,
+              workflow_id: workflow_file,
+              inputs: {
+                trigger_sha: sha
+              }
+             });
