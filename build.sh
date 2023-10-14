@@ -20,20 +20,21 @@ if ! git fetch google-bbr; then
     exit 1
 fi
 
-echo "切换BBRv3"
-if ! git checkout google-bbr/v3; then
-    echo "切换BBRv3失败"
-    exit 1
-fi
-
 echo "切换Kernel"
 if ! git checkout linux-6.5.y; then
     echo "切换Kernel失败"
     exit 1
 fi
 
+if echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG; then
+    echo "合并消息写入成功"
+else
+    echo "合并消息写入失败"
+    exit 1
+fi
+
 echo "BBRv3合并到Kernel"
-if ! git merge --no-edit google-bbr/v3; then
+if ! git merge; then
     echo "BBRv3合并到Kernel失败"
     exit 1
 fi
