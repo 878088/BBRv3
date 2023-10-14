@@ -15,7 +15,7 @@ jobs:
             const response = await octokit.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'Build x86_64 Kernel-bbrv3.yml',
+              workflow_id: 'build_x86_64_kernel.yml',
               ref: 'main',
               inputs: {
                 release: 'none'
@@ -31,7 +31,7 @@ jobs:
             const response = await octokit.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'Build ARM64 Kernel-bbrv3.yml',
+              workflow_id: 'build_arm64_kernel.yml',
               ref: 'main',
               inputs: {
                 release: 'none'
