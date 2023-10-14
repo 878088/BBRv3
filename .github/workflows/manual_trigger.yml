@@ -12,10 +12,10 @@ jobs:
         with:
           github-token: ${{ secrets.MY_GITHUB_TOKEN }}
           script: |
-            const response = await octokit.actions.createWorkflowDispatch({
+            const response = await github.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'build_x86_64_kernel.yml',
+              workflow_id: 'Build x86_64 Kernel-bbrv3.yml',
               ref: 'main',
               inputs: {
                 release: 'none'
@@ -28,10 +28,10 @@ jobs:
         with:
           github-token: ${{ secrets.MY_GITHUB_TOKEN }}
           script: |
-            const response = await octokit.actions.createWorkflowDispatch({
+            const response = await github.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'build_arm64_kernel.yml',
+              workflow_id: 'Build ARM64 Kernel-bbrv3.yml',
               ref: 'main',
               inputs: {
                 release: 'none'
