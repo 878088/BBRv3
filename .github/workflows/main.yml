@@ -38,22 +38,6 @@ jobs:
 
       - name: Build
         run: bash build.sh
-
-      - name: Compile AMD Kernel
-        run: |
-          cd linux
-          scripts/config --disable SECURITY_LOCKDOWN_LSM
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable MODULE_SIG
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
-          
-          cd ../linux-arm
-          scripts/config --disable SECURITY_LOCKDOWN_LSM
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable MODULE_SIG
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
                                              
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.3
