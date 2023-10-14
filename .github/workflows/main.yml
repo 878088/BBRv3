@@ -1,13 +1,12 @@
-name: Build Linux Kernel-bbrv3
-
-on:
-  push:
-    branches:
-      - main
-  
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build_kernel:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - ubuntu-20.04
+        version: [10, 12, 14]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -16,13 +15,10 @@ jobs:
           swap-size-mb: 512
           remove-dotnet: 'true'
           remove-android: 'true'  
-          
+
       - name: Checkout
         uses: actions/checkout@main
-      - uses: actions/setup-node@v3.8.1
-        with:
-          node-version: '18'
-      
+
       - name: Set up environment
         run: |
           sudo apt-get update
@@ -57,16 +53,18 @@ jobs:
           scripts/config --disable MODULE_SIG
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
-          
+
       - name: Clean up after Build
         run: |
           cd linux
           make distclean
-          
+
       - name: Get2 .config
+        if: matrix.os == 'ubuntu-20.04'
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
-                            
+
       - name: Compile ARM Kernel
+        if: matrix.os == 'ubuntu-20.04'
         run: |
           cd linux
           scripts/config --disable SECURITY_LOCKDOWN_LSM
@@ -74,13 +72,13 @@ jobs:
           scripts/config --disable MODULE_SIG
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg
-                                   
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.3
         with:
           name: deb
           path: linux-*/*.deb
-                    
+
       - name: Read version from Makefile
         id: version
         run: |
