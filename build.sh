@@ -59,4 +59,36 @@ if ! curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > 
     exit 1
 fi
 
+echo "开始构建"
 
+(
+    cd linux
+    echo "编译Linux (x86_64)"
+    if ! make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig; then
+        echo "编译Linux (x86_64)失败"
+        exit 1
+    fi
+
+    if ! make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg; then
+        echo "编译Linux (x86_64)失败"
+        exit 1
+    fi
+) &
+
+(
+    cd linux-arm
+    echo "编译Linux (ARM64)"
+    if ! make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig; then
+        echo "编译Linux (ARM64)失败"
+        exit 1
+    fi
+
+    if ! make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" bindeb-pkg; then
+        echo "编译Linux (ARM64)失败"
+        exit 1
+    fi
+) &
+
+wait
+
+echo "构建完成"
