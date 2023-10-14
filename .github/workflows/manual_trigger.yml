@@ -1,0 +1,26 @@
+name: Manual Trigger
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger x86_64 Kernel Workflow
+        uses: peter-evans/workflow-dispatch@v2.1.2
+        with:
+          workflow: Build x86_64 Kernel-bbrv3.yml
+          ref: main
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          inputs: |
+            release=none
+
+      - name: Trigger ARM64 Kernel Workflow
+        uses: peter-evans/workflow-dispatch@v2.1.2
+        with:
+          workflow: Build ARM64 Kernel-bbrv3.yml
+          ref: main
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          inputs: |
+            release=none
