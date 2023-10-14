@@ -90,7 +90,7 @@ jobs:
               }
              });
           
-aarch64-build:
+  aarch64-build:
     runs-on: ubuntu-latest
   
     steps:
