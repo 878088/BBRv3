@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: deb
-          path: linux-*.deb
+          path: *.deb
           
   aarch64-build:
     runs-on: ubuntu-latest
@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: deb
-          path: linux-*.deb
+          path: *.deb
           
   release:
     needs: [build, aarch64-build]
@@ -135,12 +135,12 @@ jobs:
     if: ${{ needs.build.result == 'success' && needs.aarch64-build.result == 'success' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
       
       - name: Release
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "linux-*/*.deb"
+          artifacts: "*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3
+          tag: BBRv3
