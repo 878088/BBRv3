@@ -25,7 +25,7 @@ jobs:
       
       - name: Set up environment
         run: |
-          sudo apt-get update
+          sudo apt-get update -y
           sudo apt install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper -y
 
       - name: Install LLVM and Clang
@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: deb
-          path: *.deb
+          path: linux-*/*.deb
           
   aarch64-build:
     runs-on: ubuntu-latest
@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: deb
-          path: *.deb
+          path: linux-*/*.deb
           
   release:
     needs: [build, aarch64-build]
@@ -140,7 +140,7 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "*.deb"
+          artifacts: "linux/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
           tag: BBRv3
