@@ -66,7 +66,6 @@ jobs:
         with:
           name: deb
           path: linux-*.deb
-          if: success()
           
   aarch64-build:
     runs-on: ubuntu-latest
@@ -108,12 +107,7 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm
+          
       - name: Get .config
         run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
         
@@ -134,20 +128,19 @@ jobs:
         with:
           name: deb
           path: linux-*.deb
-          if: success()
           
   release:
     needs: [build, aarch64-build]
     runs-on: ubuntu-latest
+    if: ${{ needs.build.result == 'success' && needs.aarch64-build.result == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
       
       - name: Release
-        if: ${{ needs.build.outputs.result == 'success' && needs.aarch64-build.outputs.result == 'success' }}
         uses: ncipollo/release-action@v1.13.0
         with:
           artifacts: "linux-*/*.deb"
-          prerelease: false
-          makeLatest: true
+          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
+          makeLatest: ${{ github.event.inputs.release == 'release' }}
           tag: Debian-Ubuntu-BBRv3
