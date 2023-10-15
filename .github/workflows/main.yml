@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  aarch64-build:
     runs-on: ubuntu-latest
     steps:
       - name: Maximize build space
@@ -25,8 +25,8 @@ jobs:
       
       - name: Set up environment
         run: |
-          sudo apt-get update -y
-          sudo apt install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper -y
+          sudo apt-get update
+          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen -y
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
@@ -45,41 +45,31 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-
-      - name: Get .config
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
-
+          
+      - name: Get .config for aarch64
+        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
+        
       - name: Setup cache
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm
+          key: sccache-${{ hashFiles('linux/.config') }}-llvm        
           
-      - name: Compile x86_64 Kernel
+      - name: Compile aarch64 Kernel
         run: |
           cd linux
           scripts/config --disable DEBUG_INFO_NONE
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           
-      - name: Upload a Build Artifact
+      - name: Upload aarch64 Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: deb
+          name: aarch64-deb
           path: linux-*/*.deb
-          
-      - name: Release
-        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
-        uses: ncipollo/release-action@v1.13.0
-        with:
-          artifacts: "linux-*/*.deb"
-          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
-          makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: BBRv3    
-          
-  aarch64-build:
+
+  x86_64-build:
     runs-on: ubuntu-latest
-  
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -119,8 +109,8 @@ jobs:
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
           
-      - name: Get .config
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
+      - name: Get .config for x86_64
+        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
         
       - name: Setup cache
         uses: actions/cache@v3
@@ -128,23 +118,46 @@ jobs:
           path: /home/runner/.cache/sccache
           key: sccache-${{ hashFiles('linux/.config') }}-llvm        
           
-      - name: Compile aarch64 Kernel
+      - name: Compile x86_64 Kernel
         run: |
           cd linux
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+          scripts/config --disable DEBUG_INFO_NONE
+          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           
-      - name: Upload a Build Artifact
+      - name: Upload x86_64 Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: deb
+          name: x86_64-deb
           path: linux-*/*.deb
-          
+
+  release:
+    needs: [aarch64-build, x86_64-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download aarch64 Build Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: aarch64-deb
+          path: aarch64-build
+        
+      - name: Download x86_64 Build Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: x86_64-deb
+          path: x86_64-build
+
+      - name: Merge artifacts
+        run: |
+          mkdir merged_artifacts
+          cp -r aarch64-build/* merged_artifacts
+          cp -r x86_64-build/* merged_artifacts
+
       - name: Release
         if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "linux-*/*.deb"
+          artifacts: "merged_artifacts/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: BBRv3    
+          tag: BBRv3
