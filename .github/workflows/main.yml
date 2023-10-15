@@ -58,6 +58,7 @@ jobs:
       - name: Compile x86_64 Kernel
         run: |
           cd linux
+          scripts/config --disable DEBUG_INFO_NONE
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           
@@ -66,6 +67,15 @@ jobs:
         with:
           name: deb
           path: linux-*/*.deb
+          
+      - name: Release
+        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          artifacts: "linux-*/*.deb"
+          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
+          makeLatest: ${{ github.event.inputs.release == 'release' }}
+          tag: BBRv3    
           
   aarch64-build:
     runs-on: ubuntu-latest
@@ -102,6 +112,7 @@ jobs:
         run: |
           git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
+          scripts/config --disable DEBUG_INFO_NONE
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout linux-6.5.y
@@ -129,23 +140,11 @@ jobs:
           name: deb
           path: linux-*/*.deb
           
-  release:
-    needs: [build, aarch64-build]
-    runs-on: ubuntu-latest
-    if: ${{ needs.build.result == 'success' && needs.aarch64-build.result == 'success' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Extract Deb Assets
-        run: |
-          mkdir extracted_assets
-          unzip deb.zip -d extracted_assets
-      
       - name: Release
+        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "extracted_assets/*.deb"
+          artifacts: "linux-*/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: BBRv3
+          tag: BBRv3    
