@@ -1,4 +1,4 @@
-name: Build Linux Kernel
+name: Build Kernel BBRv3
 
 on:
   push:
@@ -136,11 +136,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Extract Deb Assets
+      run: |
+        mkdir extracted_assets
+        unzip deb.zip -d extracted_assets
       
       - name: Release
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "linux/*.deb"
+          artifacts: "extracted_assets/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
           tag: BBRv3
