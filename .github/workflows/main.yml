@@ -1,4 +1,4 @@
-name: Build Kernel BBRv3
+name: Build and Release Kernel BBRv3
 
 on:
   push:
@@ -6,8 +6,14 @@ on:
       - main
 
 jobs:
-  aarch64-build:
-    runs-on: ubuntu-latest
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [aarch64, x86_64]
+
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -18,11 +24,12 @@ jobs:
           remove-android: 'true'  
           
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v3
+        
       - uses: actions/setup-node@v3.8.1
         with:
           node-version: '18'
-      
+
       - name: Set up environment
         run: |
           sudo apt-get update
@@ -45,91 +52,21 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-          
-      - name: Get .config for aarch64
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/ARM/.config > linux/.config
+
+      - name: Get .config for ${{ matrix.architecture }}
+        run: |
+          curl -sSL "https://raw.githubusercontent.com/878088/BBRv3/main/main/${{ matrix.architecture }}/.config" > linux/.config
         
       - name: Setup cache
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/sccache
           key: sccache-${{ hashFiles('linux/.config') }}-llvm        
-          
-      - name: Compile aarch64 Kernel
+
+      - name: Compile ${{ matrix.architecture }} Kernel
         run: |
           cd linux
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          scripts/config --disable MODULE_SIG
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable DEBUG_INFO_BTF
-          scripts/config --disable DEBUG_INFO_NONE
-          scripts/config --disable DEBUG_INFO_DWARF4
-          scripts/config --disable DEBUG_INFO_DWARF5
-          scripts/config --disable DEBUG_INFO_NONE
-          scripts/config --disable SYSTEM_TRUSTED_KEYS
-          scripts/config --disable SYSTEM_REVOCATION_KEYS
-          make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-          
-      - name: Upload aarch64 Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: BBRv3
-          path: linux-*.deb
-
-  x86_64-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 4096
-          swap-size-mb: 512
-          remove-dotnet: 'true'
-          remove-android: 'true'  
-          
-      - name: Checkout
-        uses: actions/checkout@main
-      - uses: actions/setup-node@v3.8.1
-        with:
-          node-version: '18'
-      
-      - name: Set up environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen -y
-
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1.8.3
-        with:
-          version: "16"
-
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      - name: Clone and configure kernel
-        run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
-          cd linux
-          scripts/config --disable DEBUG_INFO_NONE
-          git remote add google-bbr https://github.com/google/bbr.git
-          git fetch google-bbr
-          git checkout linux-6.5.y
-          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
-          git merge
-          
-      - name: Get .config for x86_64
-        run: curl -sSL https://raw.githubusercontent.com/BPG8780/BBR/main/AMD/.config > linux/.config
-        
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm        
-          
-      - name: Compile x86_64 Kernel
-        run: |
-          cd linux
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          make -j$(nproc) LLVM=1 ARCH=${{ matrix.architecture }} CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           scripts/config --disable MODULE_SIG
           scripts/config --disable DEBUG_INFO
           scripts/config --disable DEBUG_INFO_BTF
@@ -138,16 +75,16 @@ jobs:
           scripts/config --disable DEBUG_INFO_NONE
           scripts/config --disable SYSTEM_TRUSTED_KEYS
           scripts/config --disable SYSTEM_REVOCATION_KEYS
-          make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-          
-      - name: Upload x86_64 Build Artifact
+          make -j$(nproc) LLVM=1 ARCH=${{ matrix.architecture }} CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+
+      - name: Upload ${{ matrix.architecture }} Build Artifact
         uses: actions/upload-artifact@v3
         with:
           name: BBRv3
           path: linux-*.deb
 
   release:
-    needs: [aarch64-build, x86_64-build]
+    needs: [build-and-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -166,4 +103,4 @@ jobs:
           artifacts: "**/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-${{ env.version }}
+          tag: Debian-Ubuntu-BBRv3-v1-${{ env.version }}
