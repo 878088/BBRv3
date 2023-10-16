@@ -1,20 +1,10 @@
-name: Build and Release Kernel BBRv3
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
-  build-and-release:
-    runs-on: ${{ matrix.os }}
-
+  BBRv3_matrix:
     strategy:
       matrix:
-        version: [10, 12]
-        os: [ubuntu-latest, ubuntu-20.04]
-        architecture: [aarch64, x86_64]
-
+        os: [ubuntu-22.04, ubuntu-20.04]
+        version: [10, 12, 14]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -23,10 +13,10 @@ jobs:
           swap-size-mb: 512
           remove-dotnet: 'true'
           remove-android: 'true'  
-          
+
       - name: Checkout
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@main
+
       - uses: actions/setup-node@v3.8.1
         with:
           node-version: '18'
@@ -43,65 +33,3 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
-
-      - name: Clone and configure kernel
-        run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
-          cd linux
-          git remote add google-bbr https://github.com/google/bbr.git
-          git fetch google-bbr
-          git checkout linux-6.5.y
-          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
-          git merge
-
-      - name: Get .config for ${{ matrix.architecture }}
-        run: |
-          curl -sSL "https://raw.githubusercontent.com/878088/BBRv3/main/main/${{ matrix.architecture }}/.config" > linux/.config
-        
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm        
-
-      - name: Compile ${{ matrix.architecture }} Kernel
-        run: |
-          cd linux
-          make -j$(nproc) LLVM=1 ARCH=${{ matrix.architecture }} CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          scripts/config --disable MODULE_SIG
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable DEBUG_INFO_BTF
-          scripts/config --disable DEBUG_INFO_DWARF4
-          scripts/config --disable DEBUG_INFO_DWARF5
-          scripts/config --disable DEBUG_INFO_NONE
-          scripts/config --disable SYSTEM_TRUSTED_KEYS
-          scripts/config --disable SYSTEM_REVOCATION_KEYS
-          make -j$(nproc) LLVM=1 ARCH=${{ matrix.architecture }} CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-
-      - name: Upload ${{ matrix.architecture }} Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: BBRv3
-          path: linux-*.deb
-
-  release:
-    needs: [build-and-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-      - name: Display structure of downloaded files
-        run: ls -R
-      - name: Get Latest Stable Version
-        id: get_latest_version
-        run: |
-          version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
-          echo "version=$version" >> $GITHUB_ENV
-      - name: Release
-        if: ${{ github.event.inputs.release != 'none' }}
-        uses: ncipollo/release-action@v1.13.0
-        with:
-          artifacts: "**/*.deb"
-          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
-          makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-v1-${{ env.version }}
