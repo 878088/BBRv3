@@ -1,17 +1,14 @@
 name: Build Kernel BBRv3
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
-    
+        os: [ubuntu-latest, ubuntu-20.04]    
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -19,28 +16,22 @@ jobs:
           root-reserve-mb: 4096
           swap-size-mb: 512
           remove-dotnet: 'true'
-          remove-android: 'true'  
-          
+          remove-android: 'true'            
       - name: Checkout
-        uses: actions/checkout@main
-      
+        uses: actions/checkout@main      
       - uses: actions/setup-node@v3.8.1
         with:
-          node-version: '18'
-      
+          node-version: '18'      
       - name: Set up environment
         run: |
           sudo apt-get update
           sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen -y
-
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
           version: "16"
-
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
-
       - name: Clone and configure kernel
         run: |
           git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
@@ -50,56 +41,53 @@ jobs:
           git fetch google-bbr
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
-          git merge
-          
+          git merge          
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/ubuntu-latest/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
             curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/ubuntu-20.04/.config > linux/.config
-          fi
-        
+          fi        
       - name: Setup cache
         uses: actions/cache@v3
         with:
           path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm        
-          
+          key: sccache-${{ hashFiles('linux/.config') }}-llvm                  
       - name: Compile Kernel for ${{ matrix.os }}
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-            scripts/config --disable MODULE_SIG
-            scripts/config --disable DEBUG_INFO
-            scripts/config --disable DEBUG_INFO_BTF
-            scripts/config --disable DEBUG_INFO_DWARF4
-            scripts/config --disable DEBUG_INFO_DWARF5
-            scripts/config --disable DEBUG_INFO_NONE
-            scripts/config --disable SYSTEM_TRUSTED_KEYS
-            scripts/config --disable SYSTEM_REVOCATION_KEYS
-            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
             make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-            scripts/config --disable MODULE_SIG
-            scripts/config --disable DEBUG_INFO
-            scripts/config --disable DEBUG_INFO_BTF
-            scripts/config --disable DEBUG_INFO_DWARF4
-            scripts/config --disable DEBUG_INFO_DWARF5
-            scripts/config --disable DEBUG_INFO_NONE
-            scripts/config --disable SYSTEM_TRUSTED_KEYS
-            scripts/config --disable SYSTEM_REVOCATION_KEYS
-            make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-                
+          fi
+      - name: Configure Kernel for ${{ matrix.os }}
+        run: |
+          cd linux
+          scripts/config --disable MODULE_SIG
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable DEBUG_INFO_BTF
+          scripts/config --disable DEBUG_INFO_DWARF4
+          scripts/config --disable DEBUG_INFO_DWARF5
+          scripts/config --disable DEBUG_INFO_NONE
+          scripts/config --disable SYSTEM_TRUSTED_KEYS
+          scripts/config --disable SYSTEM_REVOCATION_KEYS
+      - name: Compile Kernel Deb Package for ${{ matrix.os }}
+        run: |
+          cd linux
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+          elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+           make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+          fi                
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
         with:
           name: BBRv3-${{ matrix.os }}
-          path: linux-*.deb
-          
+          path: linux-*.deb          
   release:
-    needs: [build]
+    needs: [aarch64-build, x86_64-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -118,4 +106,4 @@ jobs:
           artifacts: "**/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-${{ env.version }}
+          tag: Debian-Ubuntu-BBRv3-2-${{ env.version }}
