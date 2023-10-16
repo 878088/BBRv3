@@ -158,12 +158,12 @@ jobs:
         id: get_latest_version
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_ENV
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "linux-*.deb"
+          artifacts: "**/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-${{ steps.get_latest_version.outputs.version }}
+          tag: Debian-Ubuntu-BBRv3-${{ env.get_latest_version }}
