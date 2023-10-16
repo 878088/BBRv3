@@ -87,7 +87,7 @@ jobs:
           name: BBRv3-${{ matrix.os }}
           path: linux-*.deb          
   release:
-    needs: [aarch64-build, x86_64-build]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
