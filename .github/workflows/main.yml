@@ -25,7 +25,7 @@ jobs:
       - name: Set up environment
         run: |
           sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen -y
+          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen libstdc++6 -y
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
@@ -62,17 +62,6 @@ jobs:
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
             make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           fi
-      - name: Configure Kernel for ${{ matrix.os }}
-        run: |
-          cd linux
-          scripts/config --disable MODULE_SIG
-          scripts/config --disable DEBUG_INFO
-          scripts/config --disable DEBUG_INFO_BTF
-          scripts/config --disable DEBUG_INFO_DWARF4
-          scripts/config --disable DEBUG_INFO_DWARF5
-          scripts/config --disable DEBUG_INFO_NONE
-          scripts/config --disable SYSTEM_TRUSTED_KEYS
-          scripts/config --disable SYSTEM_REVOCATION_KEYS
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
           cd linux
@@ -106,4 +95,4 @@ jobs:
           artifacts: "**/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-2-${{ env.version }}
+          tag: Debian-Ubuntu-BBRv3-${{ env.version }}
