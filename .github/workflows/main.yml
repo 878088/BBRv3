@@ -1,3 +1,8 @@
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   BBRv3_matrix:
     strategy:
@@ -12,24 +17,19 @@ jobs:
           root-reserve-mb: 4096
           swap-size-mb: 512
           remove-dotnet: 'true'
-          remove-android: 'true'  
-
+          remove-android: 'true'
       - name: Checkout
         uses: actions/checkout@main
-
       - uses: actions/setup-node@v3.8.1
         with:
           node-version: '18'
-
       - name: Set up environment
         run: |
           sudo apt-get update
           sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen -y
-
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
           version: "16"
-
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
