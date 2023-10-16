@@ -45,10 +45,10 @@ jobs:
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
+           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
-            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
-          fi        
+           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
+          fi  
       - name: Setup cache
         uses: actions/cache@v3
         with:
@@ -60,7 +60,7 @@ jobs:
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
-            make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           fi
       - name: Configure Kernel for ${{ matrix.os }}
         run: |
@@ -79,7 +79,7 @@ jobs:
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
-           make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           fi                
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
