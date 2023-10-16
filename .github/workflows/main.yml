@@ -8,7 +8,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-latest]
-        version: [10, 12, 14]
+        version: [18]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -19,9 +20,6 @@ jobs:
           remove-android: 'true'
       - name: Checkout
         uses: actions/checkout@main
-      - uses: actions/setup-node@v3.8.1
-        with:
-          node-version: '18'
       - name: Set up environment
         run: |
           sudo apt-get update
