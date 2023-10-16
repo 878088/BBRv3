@@ -166,4 +166,4 @@ jobs:
           artifacts: "**/*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: Debian-Ubuntu-BBRv3-${{ env.get_latest_version }}
+          tag: Debian-Ubuntu-BBRv3-${{ env.version }}
