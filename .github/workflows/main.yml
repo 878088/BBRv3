@@ -1,14 +1,16 @@
+name: Build Kernel BBRv3
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  BBRv3_matrix:
+  example_matrix:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-latest]
-        version: [18]
+        version: [16]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Maximize build space
@@ -19,7 +21,11 @@ jobs:
           remove-dotnet: 'true'
           remove-android: 'true'
       - name: Checkout
-        uses: actions/checkout@main
+        uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3.8.1
+        with:
+          node-version: ${{ matrix.version }}
       - name: Set up environment
         run: |
           sudo apt-get update
@@ -30,3 +36,17 @@ jobs:
           version: "16"
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Clone and configure kernel
+        run: |
+          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          cd linux
+          git remote add google-bbr https://github.com/google/bbr.git
+          git fetch google-bbr
+          git checkout linux-6.5.y
+          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
+          git merge
+      - name: Print Repository Context
+        run: |
+          echo "Repository Owner: ${{ github.repository_owner }}"
+          echo "Current Branch: ${{ github.ref }}"
+          echo "Event Type: ${{ github.event_name }}"
