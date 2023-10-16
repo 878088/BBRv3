@@ -6,11 +6,10 @@ on:
       - main
 
 jobs:
-  example_matrix:
+  BBRv3:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04]
-        version: [16]
+        os: [ubuntu-latest, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Maximize build space
@@ -25,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3.8.1
         with:
-          node-version: ${{ matrix.version }}
+          node-version: 16
       - name: Set up environment
         run: |
           sudo apt-get update
@@ -45,13 +44,14 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-      - name: Get .config
+      - name: Get .config for ubuntu-latest
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
-          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config >> linux/.config
-          fi
+          curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
+      - name: Get .config for ubuntu-20.04
+        if: matrix.os == 'ubuntu-20.04'
+        run: |
+          curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
       - name: Print Repository Context
         run: |
           echo "Repository Owner: ${{ github.repository_owner }}"
