@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  BBRv3:
+  example_matrix:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-22.04]
@@ -45,11 +45,11 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-      - name: Get .config for aarch64
-        if: matrix.os == 'ubuntu-latest' && startsWith(matrix.version, '16')
+      - name: Get .config
+        if: matrix.os == 'ubuntu-latest'
         run: curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
-      - name: Get .config for x86_64
-        if: matrix.os == 'ubuntu-22.04' && startsWith(matrix.version, '16')
+      - name: Get .config
+        if: matrix.os == 'ubuntu-22.04'
         run: curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config >> linux/.config
       - name: Print Repository Context
         run: |
