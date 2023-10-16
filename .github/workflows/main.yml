@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]    
+        os: [ubuntu-latest, ubuntu-22.04]    
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -46,7 +46,7 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
-          elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
           fi  
       - name: Setup cache
@@ -59,7 +59,7 @@ jobs:
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
             make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           fi
       - name: Configure Kernel for ${{ matrix.os }}
@@ -78,7 +78,7 @@ jobs:
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-          elif [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           fi                
       - name: Upload Build Artifact for ${{ matrix.os }}
