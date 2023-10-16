@@ -58,14 +58,22 @@ jobs:
       - name: Compile aarch64 Kernel
         run: |
           cd linux
-          scripts/config --disable DEBUG_INFO_NONE
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          scripts/config --disable MODULE_SIG
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable DEBUG_INFO_BTF
+          scripts/config --disable DEBUG_INFO_NONE
+          scripts/config --disable DEBUG_INFO_DWARF4
+          scripts/config --disable DEBUG_INFO_DWARF5
+          scripts/config --disable DEBUG_INFO_NONE
+          scripts/config --disable SYSTEM_TRUSTED_KEYS
+          scripts/config --disable SYSTEM_REVOCATION_KEYS
           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           
       - name: Upload aarch64 Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: aarch64-deb
+          name: BBRv3
           path: linux-*.deb
 
   x86_64-build:
@@ -121,43 +129,41 @@ jobs:
       - name: Compile x86_64 Kernel
         run: |
           cd linux
-          scripts/config --disable DEBUG_INFO_NONE
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+          scripts/config --disable MODULE_SIG
+          scripts/config --disable DEBUG_INFO
+          scripts/config --disable DEBUG_INFO_BTF
+          scripts/config --disable DEBUG_INFO_DWARF4
+          scripts/config --disable DEBUG_INFO_DWARF5
+          scripts/config --disable DEBUG_INFO_NONE
+          scripts/config --disable SYSTEM_TRUSTED_KEYS
+          scripts/config --disable SYSTEM_REVOCATION_KEYS
           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           
       - name: Upload x86_64 Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: x86_64-deb
+          name: BBRv3
           path: linux-*.deb
 
   release:
     needs: [aarch64-build, x86_64-build]
     runs-on: ubuntu-latest
     steps:
-      - name: Download aarch64 Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: aarch64-deb
-          path: aarch64-build
-        
-      - name: Download x86_64 Build Artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: x86_64-deb
-          path: x86_64-build
-
-      - name: Merge artifacts
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Get Latest Stable Version
+        id: get_latest_version
         run: |
-          mkdir merged_artifacts
-          cp -r aarch64-build/* merged_artifacts
-          cp -r x86_64-build/* merged_artifacts
-
+          version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
+          echo "::set-output name=version::$version"
       - name: Release
-        if: ${{ github.event.inputs.release != 'none' && github.event.inputs.release != '' }}
+        if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
         with:
-          artifacts: "merged_artifacts/*.deb"
+          artifacts: "linux-*.deb"
           prerelease: ${{ github.event.inputs.release == 'pre-release' }}
           makeLatest: ${{ github.event.inputs.release == 'release' }}
-          tag: BBRv3
+          tag: Debian-Ubuntu-BBRv3-${{ steps.get_latest_version.outputs.version }}
