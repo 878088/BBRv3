@@ -6,11 +6,13 @@ on:
       - main
 
 jobs:
-  BBRv3:
+  example_matrix:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
-    runs-on: ${{ matrix.os }}
+        os:
+          - ubuntu-latest
+          - ubuntu-20.04
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -44,16 +46,25 @@ jobs:
           git checkout linux-6.5.y
           echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge
-      - name: Get .config for ubuntu-latest
-        if: matrix.os == 'ubuntu-latest'
+      - name: Get .config
+        run: ${{ steps.download_config.outputs.download_command }}
+  
+  download_config:
+    needs: []
+    runs-on: ubuntu-latest
+    outputs:
+      download_command: ${{ steps.get_command.outputs.download_command }}
+    steps:
+      - id: get_command
         run: |
-          curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
-      - name: Get .config for ubuntu-20.04
-        if: matrix.os == 'ubuntu-20.04'
+          echo "::set-output name=download_command::curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config"
+  
+  download_config_20_04:
+    needs: []
+    runs-on: ubuntu-20.04
+    outputs:
+      download_command: ${{ steps.get_command.outputs.download_command }}
+    steps:
+      - id: get_command
         run: |
-          curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
-      - name: Print Repository Context
-        run: |
-          echo "Repository Owner: ${{ github.repository_owner }}"
-          echo "Current Branch: ${{ github.ref }}"
-          echo "Event Type: ${{ github.event_name }}"
+          echo "::set-output name=download_command::curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config"
