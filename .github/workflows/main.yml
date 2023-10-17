@@ -36,7 +36,6 @@ jobs:
         run: |
           git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
-          scripts/config --disable DEBUG_INFO_NONE
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout linux-6.5.y
@@ -88,6 +87,7 @@ jobs:
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
+          echo "$version" > version.txt
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
