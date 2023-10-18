@@ -57,11 +57,11 @@ jobs:
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-            cp -r .config ${{ github.workspace }}/../aarch64/
-          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-            cp -r .config ${{ github.workspace }}/../x86_64/
+           make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           cp -f .config ${{ github.workspace }}/aarch64/
+           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
+           make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           cp -f .config ${{ github.workspace }}/x86_64/
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
