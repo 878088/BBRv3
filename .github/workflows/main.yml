@@ -25,7 +25,7 @@ jobs:
       - name: Set up environment
         run: |
           sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev bison bc flex rsync debhelper screen libstdc++6 -y
+          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 -y
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
@@ -57,9 +57,11 @@ jobs:
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+            cp -r .config ${{ github.workspace }}/../aarch64/
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+            make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+            cp -r .config ${{ github.workspace }}/../x86_64/
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
@@ -87,7 +89,7 @@ jobs:
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
-          echo "$version" > ${{ github.workspace }}/version.txt
+          echo "$version" > "${{ github.workspace }}/../version.txt"
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
