@@ -25,7 +25,7 @@ jobs:
       - name: Set up environment
         run: |
           sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 -y
+          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 xz-utils -y
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
