@@ -57,7 +57,7 @@ jobs:
       - name: Set cache path environment variable
         run: |
           echo "CACHE_PATH=/home/runner/.cache/sccache" >> $GITHUB_ENV
-     - name: Compile Kernel for ${{ matrix.os }}
+      - name: Compile Kernel for ${{ matrix.os }}
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
