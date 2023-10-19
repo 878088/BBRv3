@@ -25,19 +25,19 @@ jobs:
       - name: install
         run: bash install.sh
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1.8.3
+        uses: KyleMayes/install-llvm-action@v1
         with:
           version: "16"
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Clone and configure kernel
         run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          git clone --branch linux-rolling-stable --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
-          git checkout linux-6.5.y
-          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
+          git checkout linux-rolling-stable
+          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-rolling-stable" > .git/MERGE_MSG
           git merge          
       - name: Get .config for ${{ matrix.os }}
         run: |
@@ -45,30 +45,24 @@ jobs:
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
-          fi  
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm                  
+          fi
       - name: Compile Kernel for ${{ matrix.os }}
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-           cp -f .config ${{ github.workspace }}/aarch64/
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-           cp -f .config ${{ github.workspace }}/x86_64/
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
+          echo "KDEB_COMPRESS=xz" >> $GITHUB_ENV
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-          fi                
+          fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
         with:
@@ -80,14 +74,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
-      - name: Display structure of downloaded files
+      - name: downloaded
         run: ls -R
       - name: Get Latest Stable Version
         id: get_latest_version
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
-          echo "$version" > "version.txt"
+          echo "$version" > ${{ github.workspace }}/version.txt
+      - name: Upload Version Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Version
+          path: version.txt
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
