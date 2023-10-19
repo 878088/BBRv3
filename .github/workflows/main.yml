@@ -22,12 +22,8 @@ jobs:
       - uses: actions/setup-node@v3.8.1
         with:
           node-version: '18'
-      - name: Uninstall
-        run: bash uninstall.sh
-      - name: Set up environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 -y
+      - name: install
+        run: bash install.sh
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
@@ -91,7 +87,7 @@ jobs:
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
-          echo "$version" > "${{ github.workspace }}/../version.txt"
+          echo "$version" > "version.txt"
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
