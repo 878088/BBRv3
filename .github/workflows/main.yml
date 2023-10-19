@@ -25,7 +25,7 @@ jobs:
       - name: install
         run: bash install.sh
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
+        uses: KyleMayes/install-llvm-action@v1.9.0
         with:
           version: "16"
       - name: Setup sccache
@@ -67,11 +67,12 @@ jobs:
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
+          echo "KDEB_COMPRESS=xz" >> $GITHUB_ENV
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" KDEB_COMPRESS=xz deb-pkg
+           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" KDEB_COMPRESS=xz deb-pkg
+           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
