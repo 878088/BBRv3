@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]    
+        os: [ubuntu-latest, ubuntu-22.04]    
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -21,12 +21,13 @@ jobs:
         uses: actions/checkout@main      
       - uses: actions/setup-node@v3.8.1
         with:
-          node-version: '18'      
+          node-version: '18'
+      - name: Uninstall
+        run: bash uninstall.sh
       - name: Set up environment
         run: |
-          sudo dpkg -l | grep -i compress
           sudo apt-get update
-          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 xz-utils -y
+          sudo apt-get install git build-essential libncurses-dev libssl-dev libelf-dev libc-dev bison bc flex rsync debhelper screen libstdc++6 -y
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1.8.3
         with:
@@ -44,7 +45,7 @@ jobs:
           git merge          
       - name: Get .config for ${{ matrix.os }}
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
@@ -57,7 +58,7 @@ jobs:
       - name: Compile Kernel for ${{ matrix.os }}
         run: |
           cd linux
-          if [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
            cp -f .config ${{ github.workspace }}/aarch64/
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
@@ -67,7 +68,7 @@ jobs:
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
           cd linux
-          if [ "${{ matrix.os }}" == "ubuntu-20.04" ]; then
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
@@ -79,7 +80,7 @@ jobs:
           path: linux-*.deb          
   release:
     needs: [build]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
