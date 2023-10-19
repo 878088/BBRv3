@@ -46,7 +46,18 @@ jobs:
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
           fi
-      - name: Compile Kernel for ${{ matrix.os }}
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: /home/runner/.cache/sccache
+          key: sccache-${{ hashFiles('linux/.config') }}-llvm-${{ matrix.os }}
+      - name: Set cache key environment variable
+        run: |
+          echo "CACHE_KEY=${{ steps.cache_setup.outputs.cache-key }}" >> $GITHUB_ENV
+      - name: Set cache path environment variable
+        run: |
+          echo "CACHE_PATH=/home/runner/.cache/sccache" >> $GITHUB_ENV
+     - name: Compile Kernel for ${{ matrix.os }}
         run: |
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
@@ -56,12 +67,11 @@ jobs:
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
         run: |
-          echo "KDEB_COMPRESS=xz" >> $GITHUB_ENV
           cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" KDEB_COMPRESS=xz deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" KDEB_COMPRESS=xz deb-pkg
           fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
