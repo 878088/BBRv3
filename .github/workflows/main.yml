@@ -51,24 +51,23 @@ jobs:
         with:
           path: /home/runner/.cache/sccache
           key: sccache-${{ hashFiles('linux/.config') }}-llvm-${{ matrix.os }}
-      - name: Set cache key environment variable
-        run: |
-          echo "CACHE_KEY=${{ steps.cache_setup.outputs.cache-key }}" >> $GITHUB_ENV
-      - name: Set cache path environment variable
-        run: |
-          echo "CACHE_PATH=/home/runner/.cache/sccache" >> $GITHUB_ENV
       - name: Compile Kernel for ${{ matrix.os }}
+        working-directory: linux
+        env:
+          KBUILD_BUILD_TIMESTAMP: ''
+          KDEB_COMPRESS: "xz"
         run: |
-          cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
           fi
       - name: Compile Kernel Deb Package for ${{ matrix.os }}
+        working-directory: linux
+        env:
+          KBUILD_BUILD_TIMESTAMP: ''
+          KDEB_COMPRESS: "xz"
         run: |
-          echo "KDEB_COMPRESS=xz" >> $GITHUB_ENV
-          cd linux
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
