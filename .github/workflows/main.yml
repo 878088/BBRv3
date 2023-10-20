@@ -32,12 +32,12 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Clone and configure kernel
         run: |
-          git clone --branch linux-rolling-stable --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
-          git checkout linux-rolling-stable
-          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-rolling-stable" > .git/MERGE_MSG
+          git checkout linux-6.5.y
+          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
           git merge          
       - name: Get .config for ${{ matrix.os }}
         run: |
@@ -59,18 +59,9 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
            make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-          fi
-      - name: Compile Kernel Deb Package for ${{ matrix.os }}
-        working-directory: linux
-        env:
-          KBUILD_BUILD_TIMESTAMP: ''
-          KDEB_COMPRESS: "xz"
-        run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
-          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
           fi
       - name: Upload Build Artifact for ${{ matrix.os }}
@@ -91,12 +82,14 @@ jobs:
         run: |
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
-          echo "$version" > ${{ github.workspace }}/version.txt
-      - name: Upload Version Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Version
-          path: version.txt
+          echo "$version" > version.txt
+      - name: Commit and Push version.txt
+        run: |
+          git config --local user.email "6668431@gmail.com"
+          git config --local user.name "878088"
+          git add version.txt
+          git commit -m "Update version.txt"
+          git push
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
