@@ -88,7 +88,7 @@ jobs:
           git config --local user.email "6668431@gmail.com"
           git config --local user.name "878088"
           git add version.txt
-          git commit -m "Update version.txt"
+          git commit --allow-empty -m "Update version.txt"
           git push
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
