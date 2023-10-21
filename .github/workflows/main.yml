@@ -30,15 +30,24 @@ jobs:
           version: "16"
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Get Latest Kernel Branch
+        id: get_latest_branch
+        run: |
+          url="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
+          html=$(curl -s "$url")
+          branches=$(echo "$html" | grep -oP '/pub/scm/linux/kernel/git/stable/linux.git/log/\?h=\K[^<]*' | grep -v 'linux-rolling-stable' | grep -v 'linux-rolling-lts')
+          latest_branch=$(echo "$branches" | sort -Vr | head -n 1)
+          latest_branch_clean=$(echo "$latest_branch" | sed 's/.*>//')
+          echo "LATEST_KERNEL_BRANCH=$latest_branch_clean" >> $GITHUB_ENV
       - name: Clone and configure kernel
         run: |
-          git clone --branch linux-6.5.y --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+          git clone --branch $LATEST_KERNEL_BRANCH --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
-          git checkout linux-6.5.y
-          echo "Merge remote-tracking branch 'google-bbr/v3' into linux-6.5.y" > .git/MERGE_MSG
-          git merge          
+          git checkout $LATEST_KERNEL_BRANCH
+          git merge google-bbr/v3
+          ls
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
