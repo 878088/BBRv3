@@ -43,6 +43,8 @@ jobs:
         run: |
           git clone --branch $LATEST_KERNEL_BRANCH --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
+          git config --local user.email "6668431@gmail.com"
+          git config --local user.name "878088"
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
