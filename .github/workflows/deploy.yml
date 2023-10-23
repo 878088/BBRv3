@@ -1,0 +1,22 @@
+name: Deploy from Repository A
+on:
+  workflow_run:
+    workflows: ["Build Kernel BBRv3"]
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - name: downloaded
+        run: ls -R
+      - name: Release
+        if: ${{ github.event.inputs.release != 'none' }}
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          artifacts: "**/*.deb"
+          prerelease: ${{ github.event.inputs.release == 'pre-release' }}
+          makeLatest: ${{ github.event.inputs.release == 'release' }}
+          tag: Debian-Ubuntu-BBRv3-2-${{ env.version }}
