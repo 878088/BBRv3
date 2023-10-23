@@ -4,6 +4,8 @@ on:
     workflows: ["Build Kernel BBRv3"]
     branches:
       - main
+    types:
+      - completed
 jobs:
   deploy:
     runs-on: ubuntu-latest
