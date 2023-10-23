@@ -1,11 +1,6 @@
 name: Deploy from Repository A
 on:
-  workflow_run:
-    workflows: ["Build Kernel BBRv3"]
-    branches:
-      - main
-    types:
-      - completed
+  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
