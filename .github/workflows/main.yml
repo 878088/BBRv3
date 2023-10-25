@@ -94,13 +94,6 @@ jobs:
           version=$(curl -s https://www.kernel.org/releases.json | jq -r '.latest_stable.version')
           echo "version=$version" >> $GITHUB_ENV
           echo "$version" > version.txt
-      - name: Commit and Push version.txt
-        run: |
-          git config --local user.email "6668431@gmail.com"
-          git config --local user.name "878088"
-          git add version.txt
-          git commit --allow-empty -m "Update version.txt"
-          git push
       - name: Release
         if: ${{ github.event.inputs.release != 'none' }}
         uses: ncipollo/release-action@v1.13.0
