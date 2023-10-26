@@ -1,7 +1,7 @@
 name: Build Kernel BBRv3
 on:
   schedule:
-    - cron: '30 6 * * 0'
+    - cron: '00 23 * * *'
     
 jobs:
   build:
