@@ -61,10 +61,12 @@ jobs:
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0002-netfilter-add-xt_FLOWOFFLOAD-target.patch
+      - name: Get .config for ${{ matrix.os }}
+        run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > .config
+           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/aarch64/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > .config
+           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/x86_64/.config > linux/.config
           fi
       - name: Setup cache
         uses: actions/cache@v3
