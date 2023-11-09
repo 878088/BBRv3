@@ -1,7 +1,12 @@
 name: Build Kernel BBRv3
 on:
-  schedule:
-    - cron: '0 0 * * 5'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Person to greet'
+        default: 'World'
+        required: true
+        type: string
     
 env:
   CLANG: "sccache clang"
