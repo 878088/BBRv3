@@ -49,7 +49,7 @@ jobs:
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
           git merge google-bbr/v3
-          ls
+          rm -r /net/ipv4/tcp_bbr1.c
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
