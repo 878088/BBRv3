@@ -7,10 +7,6 @@ on:
         default: 'World'
         required: true
         type: string
-    
-env:
-  CLANG: "sccache clang"
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -57,6 +53,7 @@ jobs:
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
           git merge google-bbr/v3
+          rm -r /net/ipv4/tcp_bbr1.c
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch
           curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0002-netfilter-add-xt_FLOWOFFLOAD-target.patch
@@ -80,12 +77,12 @@ jobs:
           KDEB_COMPRESS: "xz"
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           make LLVM=1 ARCH=arm64 CC=$CLANG HOSTCC=$CLANG olddefconfig
-           make -j$(nproc) LLVM=1 ARCH=arm64 CC=$CLANG HOSTCC=$CLANG deb-pkg
+           make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           make LLVM=1 CC=$CLANG HOSTCC=$CLANG olddefconfig
-           make -j$(nproc) LLVM=1 CC=$CLANG HOSTCC=$CLANG deb-pkg
-          fi
+           make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+           fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
         with:
