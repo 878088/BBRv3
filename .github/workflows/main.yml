@@ -43,7 +43,7 @@ jobs:
           latest_branch=$(echo "$branches" | sort -Vr | head -n 1)
           latest_branch_clean=$(echo "$latest_branch" | sed 's/.*>//')
           echo "LATEST_KERNEL_BRANCH=$latest_branch_clean" >> $GITHUB_ENV
-      - name: Clone, configure kernel and get .config
+      - name: Clone kernel
         run: |
           git clone --branch $LATEST_KERNEL_BRANCH --jobs=0 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           cd linux
@@ -53,12 +53,7 @@ jobs:
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
           git merge google-bbr/v3
-          rm -r net/ipv4/tcp_bbr1.c 
-      - name: Copy patch files
-        run: |
-          cp ${{ github.workspace }}/Patches/*.patch ${{ github.workspace }}/linux/
-          cd linux
-          for file in *.patch; do patch --batch -p1 -t < $file; done
+          rm -r net/ipv4/tcp_bbr1.c
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
