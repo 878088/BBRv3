@@ -53,10 +53,11 @@ jobs:
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
           git merge google-bbr/v3
-          curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch
-          curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch
-          curl -O https://raw.githubusercontent.com/878088/BBRv3/main/Patches/0002-netfilter-add-xt_FLOWOFFLOAD-target.patch
-          ls
+          rm -r net/ipv4/tcp_bbr1.c 
+      - name: Copy patch files
+        run: |
+          cp ${{ github.workspace }}/Patches/*.patch ${{ github.workspace }}/linux/
+          ls linux
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
