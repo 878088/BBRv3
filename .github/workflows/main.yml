@@ -26,8 +26,6 @@ jobs:
       - uses: actions/setup-node@v3.8.1
         with:
           node-version: '18'
-      - name: Setup Python
-        uses: actions/setup-python@v5.0.0
       - name: install
         run: bash install.sh
       - name: Install LLVM and Clang
