@@ -57,7 +57,7 @@ jobs:
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/ARRM/.config > linux/.config
+           curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/ARM/.config > linux/.config
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/AMD/.config > linux/.config
           fi
