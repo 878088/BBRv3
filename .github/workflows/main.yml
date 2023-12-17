@@ -69,7 +69,6 @@ jobs:
       - name: Compile Kernel for ${{ matrix.os }}
         working-directory: linux
         env:
-          KBUILD_BUILD_TIMESTAMP: ''
           KDEB_COMPRESS: "xz"
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
