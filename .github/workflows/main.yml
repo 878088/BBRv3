@@ -71,9 +71,11 @@ jobs:
           KDEB_COMPRESS: "xz"
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+           make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+           make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
+           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
