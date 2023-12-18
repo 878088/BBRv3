@@ -53,7 +53,6 @@ jobs:
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
           git merge google-bbr/v3
-          rm -r net/ipv4/tcp_bbr1.c
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
@@ -72,11 +71,9 @@ jobs:
           KDEB_COMPRESS: "xz"
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-           make LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
            make -j$(nproc) LLVM=1 ARCH=arm64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-           make LLVM=1 CC="sccache clang" HOSTCC="sccache clang" olddefconfig
-           make -j$(nproc) LLVM=1 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
+           make -j$(nproc) LLVM=1 ARCH=x86_64 CC="sccache clang" HOSTCC="sccache clang" deb-pkg
            fi
       - name: Upload Build Artifact for ${{ matrix.os }}
         uses: actions/upload-artifact@v3
