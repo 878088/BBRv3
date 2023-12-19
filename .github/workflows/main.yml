@@ -60,11 +60,6 @@ jobs:
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
            curl -sSL https://raw.githubusercontent.com/878088/BBRv3/main/AMD/.config > linux/.config
           fi
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/sccache
-          key: sccache-${{ hashFiles('linux/.config') }}-llvm-${{ matrix.os }}
       - name: Compile Kernel for ${{ matrix.os }}
         working-directory: linux
         env:
