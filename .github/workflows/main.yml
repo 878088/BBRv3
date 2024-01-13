@@ -52,7 +52,8 @@ jobs:
           git remote add google-bbr https://github.com/google/bbr.git
           git fetch google-bbr
           git checkout $LATEST_KERNEL_BRANCH
-          git merge google-bbr/v3
+          git merge -s ours google-bbr/v3
+          git checkout -B $LATEST_KERNEL_BRANCH google-bbr/v3
       - name: Get .config for ${{ matrix.os }}
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
